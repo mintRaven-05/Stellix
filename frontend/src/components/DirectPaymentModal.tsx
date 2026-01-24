@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function DirectPaymentModal({ isOpen, onClose, recipient, availableAssets = [] }: Props) {
-  const { userData, verifyPin } = useAuth();
+  const { userData, verifyPin, getPrimarySecret } = useAuth();
   const [asset, setAsset] = useState('XLM');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,16 +69,22 @@ export default function DirectPaymentModal({ isOpen, onClose, recipient, availab
     setError('');
 
     try {
+      // Decrypt the secret
+      const senderSecret = await getPrimarySecret();
+      if (!senderSecret) {
+        throw new Error('Failed to retrieve wallet secret');
+      }
+
       const response = await fetch('https://stellix-backend.vercel.app/api/payment/directPay', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sender_secret: userData.primarySecret,
-          receiver_wallet: recipient.primaryWallet,
-          asset: asset,
-          amount: amt,
+          senderSecret: senderSecret,
+          AssetCode: asset,
+          AssetAmount: amt,
+          recieverWallet: recipient.primaryWallet,
         }),
       });
 
