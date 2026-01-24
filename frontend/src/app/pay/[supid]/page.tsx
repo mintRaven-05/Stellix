@@ -7,6 +7,7 @@ import { databases, Query } from '@/lib/appwrite';
 import { FaUserCircle } from 'react-icons/fa';
 import { IoChevronDownOutline, IoRefreshOutline } from 'react-icons/io5';
 import DirectPaymentModal from '@/components/DirectPaymentModal';
+import ProtectedPayModal from '@/components/ProtectedPayModal';
 
 const TX_API_BASE = 'https://stellix-backend.vercel.app/api/transaction/history';
 
@@ -79,7 +80,7 @@ export default function PersonPage() {
   const [availableAssets, setAvailableAssets] = useState<Array<{ code: string; issuer: string | null; balance: string }>>([]);
 
   const [showDirect, setShowDirect] = useState(false);
-  const [showSecure, setShowSecure] = useState(false);
+  const [showProtected, setShowProtected] = useState(false);
   useEffect(() => {
     if (!user) router.push('/login');
     else if (!userData) router.push('/connect-wallet');
@@ -235,8 +236,8 @@ export default function PersonPage() {
                 Pay Now
               </button>
               <button
-                disabled
-                className="py-3 rounded-xl bg-gray-200 text-gray-500 font-bold cursor-not-allowed opacity-50"
+                onClick={() => setShowProtected(true)}
+                className="py-3 rounded-xl bg-[#FFC940] text-black font-bold"
               >
                 Protected Pay
               </button>
@@ -286,12 +287,20 @@ export default function PersonPage() {
       </div>
 
       {person && (
-        <DirectPaymentModal
-          isOpen={showDirect}
-          onClose={() => setShowDirect(false)}
-          recipient={person}
-          availableAssets={availableAssets}
-        />
+        <>
+          <DirectPaymentModal
+            isOpen={showDirect}
+            onClose={() => setShowDirect(false)}
+            recipient={person}
+            availableAssets={availableAssets}
+          />
+          <ProtectedPayModal
+            isOpen={showProtected}
+            onClose={() => setShowProtected(false)}
+            recipient={person}
+            availableAssets={availableAssets}
+          />
+        </>
       )}
     </div>
   );
