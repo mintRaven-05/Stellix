@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Create new wallet via API
-      const response = await fetch('https://supi-two.vercel.app/api/wallet/create', {
+      const response = await fetch('https://stellix-backend.vercel.app/api/wallet/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Create new wallet via API
-      const response = await fetch('https://supi-two.vercel.app/api/wallet/create', {
+      const response = await fetch('https://stellix-backend.vercel.app/api/wallet/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
