@@ -26,7 +26,7 @@ interface WalletDetails {
 }
 
 export default function WalletPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, getPrimarySecret, getWalletSecret } = useAuth();
   const router = useRouter();
 
   const [walletDetails, setWalletDetails] = useState<WalletDetails | null>(null);
@@ -301,23 +301,21 @@ export default function WalletPage() {
           issuer: b.assetIssuer,
           balance: b.balance,
         })) || []}
-        secretKey={userData?.primarySecret || ''}
         onSwapSuccess={handleSwapSuccess}
       />
 
       <AddAssetModal
         isOpen={showAddAssetModal}
         onClose={() => setShowAddAssetModal(false)}
-        secretKey={userData?.primarySecret || ''}
         onAddSuccess={handleAddAssetSuccess}
       />
 
       <SelfTransferModal
         isOpen={showSelfTransferModal}
         onClose={() => setShowSelfTransferModal(false)}
-        wallets={userData?.walletAddresses.map((address, idx) => ({
+        wallets={userData?.walletAddresses.map((address) => ({
           address,
-          secret: userData.walletSecrets[idx],
+          getSecret: async () => await getWalletSecret(address),
         })) || []}
         availableAssets={walletDetails?.balances.map(b => ({
           code: b.assetCode,
