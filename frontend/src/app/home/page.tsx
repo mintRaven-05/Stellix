@@ -147,16 +147,6 @@ export default function HomePage() {
                 </p>
               </div>
 
-
-              <div className="rounded-2xl bg-white p-4 border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Wallets</p>
-                  <IoPulseOutline className="text-xl text-gray-700" />
-                </div>
-                <p className="mt-2 text-2xl font-extrabold text-gray-900">{wallets}</p>
-                <p className="text-[11px] text-gray-500 mt-1">Linked to sUPI</p>
-              </div>
-
               <div className="rounded-2xl bg-white p-4 border border-gray-200">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-gray-500">Security</p>
