@@ -1,0 +1,57 @@
+[
+  {
+    "id": "tx1",
+    "type": "received",
+    "amount": "250.00",
+    "currency": "XLM",
+    "from": "rahul123abc",
+    "fromName": "Rahul Sharma",
+    "to": "currentuser",
+    "timestamp": "2026-01-20T10:30:00Z",
+    "status": "completed"
+  },
+  {
+    "id": "tx2",
+    "type": "sent",
+    "amount": "100.50",
+    "currency": "USDC",
+    "from": "currentuser",
+    "to": "priya456def",
+    "toName": "Priya Patel",
+    "timestamp": "2026-01-19T15:45:00Z",
+    "status": "completed"
+  },
+  {
+    "id": "tx3",
+    "type": "received",
+    "amount": "500.00",
+    "currency": "XLM",
+    "from": "amit789ghi",
+    "fromName": "Amit Kumar",
+    "to": "currentuser",
+    "timestamp": "2026-01-18T09:20:00Z",
+    "status": "completed"
+  },
+  {
+    "id": "tx4",
+    "type": "sent",
+    "amount": "75.25",
+    "currency": "USDC",
+    "from": "currentuser",
+    "to": "sneha321jkl",
+    "toName": "Sneha Reddy",
+    "timestamp": "2026-01-17T14:10:00Z",
+    "status": "completed"
+  },
+  {
+    "id": "tx5",
+    "type": "received",
+    "amount": "1000.00",
+    "currency": "XLM",
+    "from": "vikram654mno",
+    "fromName": "Vikram Singh",
+    "to": "currentuser",
+    "timestamp": "2026-01-16T11:55:00Z",
+    "status": "completed"
+  }
+]
