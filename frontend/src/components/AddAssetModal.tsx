@@ -49,7 +49,7 @@ export default function AddAssetModal({ isOpen, onClose, secretKey, onAddSuccess
     setSearchResults([]);
 
     try {
-      const response = await fetch(`https://supi-two.vercel.app/api/wallet/assets/search?assetCode=${encodeURIComponent(query)}&limit=200`);
+      const response = await fetch(`https://stellix-backend.vercel.app/api/wallet/assets/search?assetCode=${encodeURIComponent(query)}&limit=200`);
       const result = await response.json();
 
       if (!response.ok || !result.success) {
@@ -93,7 +93,7 @@ export default function AddAssetModal({ isOpen, onClose, secretKey, onAddSuccess
     setError('');
 
     try {
-      const response = await fetch('https://supi-two.vercel.app/api/wallet/assets/add', {
+      const response = await fetch('https://stellix-backend.vercel.app/api/wallet/assets/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
