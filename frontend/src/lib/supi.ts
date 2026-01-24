@@ -14,10 +14,11 @@ export interface UserData {
   supid: string;
   walletAddresses: string[]; // Array of wallet addresses
   primaryWallet: string; // The default wallet for transactions
-  walletSecrets: string[]; // Array of wallet secret keys (encrypted in production)
-  primarySecret: string; // The default wallet secret key (encrypted in production)
+  walletSecrets: string[]; // Array of wallet secret keys (encrypted)
+  primarySecret: string; // The default wallet secret key (encrypted)
   supi_pin: string; // 6-digit PIN for transaction authorization (plaintext for now)
   email: string;
   dateCreated: string;
+  pref: string; // Preferred asset (hardcoded to 'XLM')
   name?: string;
 }
