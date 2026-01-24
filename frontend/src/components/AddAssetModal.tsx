@@ -20,12 +20,11 @@ interface AssetSearchResult {
 interface AddAssetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  secretKey: string;
   onAddSuccess: () => void;
 }
 
-export default function AddAssetModal({ isOpen, onClose, secretKey, onAddSuccess }: AddAssetModalProps) {
-  const { verifyPin } = useAuth();
+export default function AddAssetModal({ isOpen, onClose, onAddSuccess }: AddAssetModalProps) {
+  const { verifyPin, getPrimarySecret } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<AssetSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -93,6 +92,12 @@ export default function AddAssetModal({ isOpen, onClose, secretKey, onAddSuccess
     setError('');
 
     try {
+      // Decrypt the secret
+      const secretKey = await getPrimarySecret();
+      if (!secretKey) {
+        throw new Error('Failed to retrieve wallet secret');
+      }
+
       const response = await fetch('https://stellix-backend.vercel.app/api/wallet/assets/add', {
         method: 'POST',
         headers: {
