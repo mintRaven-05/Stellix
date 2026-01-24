@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import ProtectedPayNotifications from '@/components/ProtectedPayNotifications';
+import QRDisplayModal from '@/components/QRDisplayModal';
 import { databases, Query } from '@/lib/appwrite';
 import BackgroundPattern from '@/components/BackgroundPattern';
 import {
@@ -86,6 +88,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] relative">
+      <ProtectedPayNotifications />
 
       <BackgroundPattern />
 
@@ -234,6 +237,14 @@ export default function HomePage() {
         {/* bottom-nav safe spacing */}
         <div className="h-24" />
       </div>
+
+      {/* QR Display Modal */}
+      <QRDisplayModal
+        isOpen={showQRDisplay}
+        onClose={() => setShowQRDisplay(false)}
+        supid={userData.supid}
+        userName={userData.name}
+      />
     </div>
   );
 }

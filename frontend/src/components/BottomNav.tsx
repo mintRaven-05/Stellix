@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { IoHomeOutline, IoTimeOutline, IoQrCodeOutline, IoWalletOutline } from 'react-icons/io5';
 import { MdOutlineQrCodeScanner } from 'react-icons/md';
 import { SiStellar } from 'react-icons/si';
+import QRScannerModal from './QRScannerModal';
 
 function Tab({
   href,
@@ -84,6 +85,11 @@ export default function BottomNav() {
           </div>
         </div>
       </div>
+
+      <QRScannerModal
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+      />
     </>
   );
 }
