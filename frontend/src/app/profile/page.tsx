@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { databases, Query } from '@/lib/appwrite';
 import WalletManagementModal from '@/components/WalletManagementModal';
 import BackgroundPattern from '@/components/BackgroundPattern';
 import {
@@ -26,6 +27,8 @@ export default function ProfilePage() {
 
   const [showWalletManagement, setShowWalletManagement] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [preference, setPreference] = useState(userData?.pref || 'XLM');
+  const [savingPref, setSavingPref] = useState(false);
 
   const primary = userData?.primaryWallet;
 
@@ -37,9 +40,35 @@ export default function ProfilePage() {
   }, [userData?.dateCreated]);
 
   useEffect(() => {
-    if (!user) router.push('/login');
-    else if (!userData) router.push('/connect-wallet');
-  }, [user, userData, router]);
+    if (userData?.pref) {
+      setPreference(userData.pref);
+    }
+  }, [userData?.pref]);
+
+  const handlePreferenceChange = async (newPref: string) => {
+    setPreference(newPref);
+    setSavingPref(true);
+
+    try {
+      const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+      const usersCol = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
+
+      const userDoc = await databases.listDocuments(dbId, usersCol, [
+        Query.equal('email', user?.email || ''),
+      ]);
+
+      if (userDoc.documents.length > 0) {
+        await databases.updateDocument(dbId, usersCol, userDoc.documents[0].$id, {
+          pref: newPref,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update preference:', error);
+      setPreference(userData?.pref || 'XLM');
+    } finally {
+      setSavingPref(false);
+    }
+  };
 
   const copyPrimary = async () => {
     if (!primary) return;
@@ -171,6 +200,31 @@ export default function ProfilePage() {
             >
               Manage wallets
             </button>
+          </div>
+
+          {/* Preference Selector */}
+          <div className="mt-4 rounded-2xl bg-blue-50 border border-blue-200 p-4">
+            <p className="text-sm font-extrabold text-gray-900">Preferred Asset</p>
+            <p className="text-xs text-gray-700 mt-1">
+              Choose your preferred asset for auto-swap in protected payments.
+            </p>
+
+            <div className="mt-3">
+              <select
+                value={preference}
+                onChange={(e) => handlePreferenceChange(e.target.value)}
+                disabled={savingPref}
+                className="w-full px-4 py-3 rounded-2xl border border-blue-300 bg-white text-gray-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+              >
+                <option value="XLM">XLM (Lumens)</option>
+                <option value="USDC">USDC (USD Coin)</option>
+                <option value="INRPC">INRPC (Indian Rupee)</option>
+              </select>
+            </div>
+
+            <p className="text-[11px] text-gray-600 mt-2">
+              {savingPref ? '💾 Saving...' : '✓ Current: ' + preference}
+            </p>
           </div>
         </div>
       </div>
