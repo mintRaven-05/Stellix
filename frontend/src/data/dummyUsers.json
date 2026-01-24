@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "name": "Rahul Sharma",
+    "supid": "rahul123abc",
+    "email": "rahul@example.com",
+    "walletAddresses": ["GDJLBYYKMCXNVVNABOE66NYXQGIA5AC5D223Z2KF6ZEYK4UBXETPNCBJ"],
+    "primaryWallet": "GDJLBYYKMCXNVVNABOE66NYXQGIA5AC5D223Z2KF6ZEYK4UBXETPNCBJ"
+  },
+  {
+    "id": "2",
+    "name": "Priya Patel",
+    "supid": "priya456def",
+    "email": "priya@example.com",
+    "walletAddresses": ["GBVFTZL5HIPT4PFQVTZVIWR77V7LWYCXU4CLYWWHHOEXB64XPL5LTAXP"],
+    "primaryWallet": "GBVFTZL5HIPT4PFQVTZVIWR77V7LWYCXU4CLYWWHHOEXB64XPL5LTAXP"
+  },
+  {
+    "id": "3",
+    "name": "Amit Kumar",
+    "supid": "amit789ghi",
+    "email": "amit@example.com",
+    "walletAddresses": ["GCXKG6RN4ONIEPCMNFB732A436Z5PNDSRLGWK7GBLCMQLIFO4S7EYWVU"],
+    "primaryWallet": "GCXKG6RN4ONIEPCMNFB732A436Z5PNDSRLGWK7GBLCMQLIFO4S7EYWVU"
+  },
+  {
+    "id": "4",
+    "name": "Sneha Reddy",
+    "supid": "sneha321jkl",
+    "email": "sneha@example.com",
+    "walletAddresses": ["GDNS4YIBSVXQKXR6APQQ5NNSLR5VIY3Y4YJ7M7KQVZV7XQHKP5NPKQYJ"],
+    "primaryWallet": "GDNS4YIBSVXQKXR6APQQ5NNSLR5VIY3Y4YJ7M7KQVZV7XQHKP5NPKQYJ"
+  },
+  {
+    "id": "5",
+    "name": "Vikram Singh",
+    "supid": "vikram654mno",
+    "email": "vikram@example.com",
+    "walletAddresses": ["GCLWGQPMKXQSPF754ZIKX75XHCP6AJNRVFFR5S7L2KCDFVLUCMNGFM3P"],
+    "primaryWallet": "GCLWGQPMKXQSPF754ZIKX75XHCP6AJNRVFFR5S7L2KCDFVLUCMNGFM3P"
+  }
+]
