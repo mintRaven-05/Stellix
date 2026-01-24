@@ -1,36 +1,55 @@
+
 const { 
   server, 
   networkPassphrase, 
-  StellarSDK, 
+  StellarSDK,
   getAsset,
+  getTokenContractAddress,
   generatePaymentId,
   generateOTP,
   hashOTP
 } = require('../utils/stellar.js');
+
+// Import from the latest SDK structure
+const { Contract, rpc, scValToNative, nativeToScVal } = StellarSDK;
+
+// In latest SDK, SorobanRpc is now called 'rpc'
+const SorobanRpc = rpc;
+
+// Log to verify imports worked
+console.log('SorobanRpc (rpc):', typeof SorobanRpc);
+console.log('Contract:', typeof Contract);
+console.log('SorobanRpc.Server:', typeof SorobanRpc?.Server);
+
+// Helper function to validate contract ID
+function validateContractId(contractId) {
+  if (!contractId) {
+    throw new Error('CONTRACT_ID not set in .env file');
+  }
+  
+  if (!contractId.startsWith('C') || contractId.length !== 56) {
+    throw new Error(`Invalid CONTRACT_ID format: ${contractId}`);
+  }
+  
+  return contractId;
+}
 
 // Direct Pay - Simple Stellar payment (no contract needed)
 exports.directPay = async (req, res) => {
   try {
     const { sender_secret, receiver_wallet, asset, amount } = req.body;
 
-    // Validate inputs
     if (!sender_secret || !receiver_wallet || !asset || !amount) {
       return res.status(400).json({ 
         error: 'Missing required fields: sender_secret, receiver_wallet, asset, amount' 
       });
     }
 
-    // Load sender keypair
     const senderKeypair = StellarSDK.Keypair.fromSecret(sender_secret);
     const senderPublic = senderKeypair.publicKey();
-
-    // Load sender account
     const senderAccount = await server.loadAccount(senderPublic);
-
-    // Get asset
     const stellarAsset = getAsset(asset);
 
-    // Build transaction
     const transaction = new StellarSDK.TransactionBuilder(senderAccount, {
       fee: StellarSDK.BASE_FEE,
       networkPassphrase: networkPassphrase,
@@ -45,10 +64,7 @@ exports.directPay = async (req, res) => {
       .setTimeout(30)
       .build();
 
-    // Sign transaction
     transaction.sign(senderKeypair);
-
-    // Submit transaction
     const result = await server.submitTransaction(transaction);
 
     res.json({
@@ -70,50 +86,159 @@ exports.directPay = async (req, res) => {
   }
 };
 
-// Protected Pay - Initiate escrow with OTP (stored in contract, no DB!)
+// Protected Pay - Initiate escrow with OTP
 exports.initiateProtectedPay = async (req, res) => {
   try {
-    const { sender_secret, receiver_wallet, asset, amount } = req.body;
+    const { sender_secret, receiver_wallet, asset, amount, asset_issuer } = req.body;
 
-    // Validate inputs
     if (!sender_secret || !receiver_wallet || !asset || !amount) {
       return res.status(400).json({ 
         error: 'Missing required fields: sender_secret, receiver_wallet, asset, amount' 
       });
     }
 
-    // Load sender keypair
     const senderKeypair = StellarSDK.Keypair.fromSecret(sender_secret);
     const senderPublic = senderKeypair.publicKey();
 
-    // Generate payment ID and OTP
     const paymentId = generatePaymentId();
     const otp = generateOTP();
-    const otpHash = hashOTP(otp); // Hash the OTP for storage in contract
+    const otpHash = hashOTP(otp);
 
-    // TODO: Call Soroban contract to create escrow
-    // The contract will store the OTP hash - no database needed!
-    // Steps:
-    // 1. Load sender account
-    // 2. Get asset address (for token contract)
-    // 3. Build transaction invoking contract.create_escrow(
-    //      payment_id, sender, receiver, amount, token_address, otp_hash
-    //    )
-    // 4. Sign and submit transaction
+    console.log('=== Protected Pay Details ===');
+    console.log('Payment ID:', paymentId);
+    console.log('OTP:', otp);
+    console.log('OTP Hash:', otpHash);
+
+    const tokenAddress = getTokenContractAddress(asset, asset_issuer);
+    console.log('Token Address:', tokenAddress);
+
+    const senderAccount = await server.loadAccount(senderPublic);
+
+    const contractId = validateContractId(process.env.CONTRACT_ID);
+    console.log('Contract ID:', contractId);
+
+    const contract = new Contract(contractId);
+    const amountInStroops = Math.floor(parseFloat(amount) * 10000000);
+
+    console.log('Amount in stroops:', amountInStroops);
+
+    const transaction = new StellarSDK.TransactionBuilder(senderAccount, {
+      fee: '100000',
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(
+        contract.call(
+          'create_escrow',
+          nativeToScVal(paymentId, { type: 'string' }),
+          nativeToScVal(senderPublic, { type: 'address' }),
+          nativeToScVal(receiver_wallet, { type: 'address' }),
+          nativeToScVal(amountInStroops, { type: 'i128' }),
+          nativeToScVal(tokenAddress, { type: 'address' }),
+          nativeToScVal(otpHash, { type: 'string' })
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    transaction.sign(senderKeypair);
+
+    const sorobanServer = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL);
     
-    // For now, simulated response
-    res.json({
-      success: true,
-      message: 'Protected payment initiated via SUPI. Share OTP with receiver.',
-      payment_id: paymentId,
-      otp: otp, // Send OTP to sender's frontend
-      sender: senderPublic,
-      receiver: receiver_wallet,
-      amount: amount,
-      asset: asset,
-      status: 'pending',
-      note: 'OTP is stored securely in the smart contract. No database needed!'
-    });
+    console.log('Simulating transaction...');
+    const simulateResponse = await sorobanServer.simulateTransaction(transaction);
+    
+    if (SorobanRpc.Api.isSimulationError(simulateResponse)) {
+      console.error('Simulation failed:', simulateResponse);
+      return res.status(400).json({ 
+        error: 'Simulation failed', 
+        details: simulateResponse.error 
+      });
+    }
+
+    console.log('Simulation successful');
+
+    // Assemble the transaction
+    let preparedTransaction;
+    try {
+      preparedTransaction = SorobanRpc.assembleTransaction(transaction, simulateResponse);
+    } catch (e) {
+      console.error('Assembly error:', e);
+      return res.status(400).json({
+        error: 'Failed to assemble transaction',
+        details: e.message
+      });
+    }
+
+    console.log('Transaction assembled, type:', typeof preparedTransaction);
+    console.log('Has sign method:', typeof preparedTransaction.sign);
+
+    // The assembled transaction needs to be built first in newer SDK versions
+    let finalTransaction;
+    if (typeof preparedTransaction.build === 'function') {
+      finalTransaction = preparedTransaction.build();
+      finalTransaction.sign(senderKeypair);
+    } else if (typeof preparedTransaction.sign === 'function') {
+      preparedTransaction.sign(senderKeypair);
+      finalTransaction = preparedTransaction;
+    } else {
+      // If it's already a built transaction
+      finalTransaction = preparedTransaction;
+      if (finalTransaction.toXDR) {
+        // Re-create from XDR and sign
+        const xdr = finalTransaction.toXDR();
+        finalTransaction = new StellarSDK.TransactionBuilder.fromXDR(xdr, networkPassphrase);
+        if (typeof finalTransaction.sign === 'function') {
+          finalTransaction.sign(senderKeypair);
+        }
+      }
+    }
+
+    console.log('Submitting transaction...');
+    const sendResponse = await sorobanServer.sendTransaction(finalTransaction);
+    
+    if (sendResponse.status === 'ERROR') {
+      console.error('Submit failed:', sendResponse);
+      return res.status(400).json({ 
+        error: 'Transaction failed', 
+        details: sendResponse 
+      });
+    }
+
+    console.log('Transaction submitted, hash:', sendResponse.hash);
+
+    let getResponse = await sorobanServer.getTransaction(sendResponse.hash);
+    let attempts = 0;
+    
+    while (getResponse.status === 'NOT_FOUND' && attempts < 10) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      getResponse = await sorobanServer.getTransaction(sendResponse.hash);
+      attempts++;
+      console.log(`Attempt ${attempts}/10: ${getResponse.status}`);
+    }
+
+    if (getResponse.status === 'SUCCESS') {
+      console.log('Transaction successful!');
+      res.json({
+        success: true,
+        message: 'Protected payment initiated via SUPI. Share OTP with receiver.',
+        payment_id: paymentId,
+        otp: otp,
+        sender: senderPublic,
+        receiver: receiver_wallet,
+        amount: amount,
+        asset: asset,
+        token_contract: tokenAddress,
+        transaction_hash: sendResponse.hash,
+        status: 'pending',
+        note: 'Funds are now locked in smart contract. OTP stored securely on-chain!'
+      });
+    } else {
+      console.error('Transaction failed:', getResponse);
+      res.status(400).json({ 
+        error: 'Transaction failed', 
+        status: getResponse.status 
+      });
+    }
 
   } catch (error) {
     console.error('Protected pay initiation error:', error);
@@ -124,36 +249,99 @@ exports.initiateProtectedPay = async (req, res) => {
   }
 };
 
-// Verify OTP and release funds (contract validates OTP, no DB lookup!)
+// Verify OTP and release funds
 exports.verifyAndRelease = async (req, res) => {
   try {
-    const { payment_id, otp } = req.body;
+    const { payment_id, otp, receiver_secret } = req.body;
 
-    // Validate inputs
-    if (!payment_id || !otp) {
+    if (!payment_id || !otp || !receiver_secret) {
       return res.status(400).json({ 
-        error: 'Missing required fields: payment_id, otp' 
+        error: 'Missing required fields: payment_id, otp, receiver_secret' 
       });
     }
 
-    const otpHash = hashOTP(otp); // Hash the provided OTP
+    const otpHash = hashOTP(otp);
+    const contractId = validateContractId(process.env.CONTRACT_ID);
+    const receiverKeypair = StellarSDK.Keypair.fromSecret(receiver_secret);
+    const account = await server.loadAccount(receiverKeypair.publicKey());
+    const contract = new Contract(contractId);
 
-    // TODO: Call Soroban contract to verify and release funds
-    // The contract has the OTP hash stored - it will validate directly!
-    // Steps:
-    // 1. Build transaction invoking contract.release_funds(payment_id, otp_hash)
-    // 2. Contract validates OTP hash internally
-    // 3. Contract releases funds if valid
-    // 4. Sign and submit transaction
+    const transaction = new StellarSDK.TransactionBuilder(account, {
+      fee: '100000',
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(
+        contract.call(
+          'release_funds',
+          nativeToScVal(payment_id, { type: 'string' }),
+          nativeToScVal(otpHash, { type: 'string' })
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    transaction.sign(receiverKeypair);
+
+    const sorobanServer = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL);
+    const simulateResponse = await sorobanServer.simulateTransaction(transaction);
     
-    // Simulated response
-    res.json({
-      success: true,
-      message: 'OTP verified by smart contract. Funds released successfully via SUPI.',
-      payment_id: payment_id,
-      status: 'completed',
-      note: 'Contract validated OTP and released funds - no database was used!'
-    });
+    if (SorobanRpc.Api.isSimulationError(simulateResponse)) {
+      return res.status(400).json({ 
+        error: 'OTP verification failed', 
+        details: simulateResponse.error 
+      });
+    }
+
+    // Assemble the transaction
+    let preparedTransaction = SorobanRpc.assembleTransaction(transaction, simulateResponse);
+
+    // Handle different SDK versions
+    let finalTransaction;
+    if (typeof preparedTransaction.build === 'function') {
+      finalTransaction = preparedTransaction.build();
+      finalTransaction.sign(receiverKeypair);
+    } else if (typeof preparedTransaction.sign === 'function') {
+      preparedTransaction.sign(receiverKeypair);
+      finalTransaction = preparedTransaction;
+    } else {
+      finalTransaction = preparedTransaction;
+    }
+
+    const sendResponse = await sorobanServer.sendTransaction(finalTransaction);
+    
+    if (sendResponse.status === 'ERROR') {
+      return res.status(400).json({ 
+        error: 'Transaction failed', 
+        details: sendResponse 
+      });
+    }
+
+    let getResponse = await sorobanServer.getTransaction(sendResponse.hash);
+    let attempts = 0;
+    
+    while (getResponse.status === 'NOT_FOUND' && attempts < 10) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      getResponse = await sorobanServer.getTransaction(sendResponse.hash);
+      attempts++;
+    }
+
+    if (getResponse.status === 'SUCCESS') {
+      res.json({
+        success: true,
+        message: 'OTP verified by smart contract. Funds released successfully!',
+        payment_id: payment_id,
+        receiver: receiverKeypair.publicKey(),
+        transaction_hash: sendResponse.hash,
+        status: 'completed',
+        note: 'Contract validated OTP and released funds automatically!'
+      });
+    } else {
+      res.status(400).json({ 
+        error: 'Verification failed', 
+        status: getResponse.status,
+        details: 'Invalid OTP or transaction error'
+      });
+    }
 
   } catch (error) {
     console.error('Verify and release error:', error);
@@ -163,25 +351,60 @@ exports.verifyAndRelease = async (req, res) => {
     });
   }
 };
-
 // Get payment status from contract
 exports.getPaymentStatus = async (req, res) => {
   try {
     const { payment_id } = req.params;
 
-    // TODO: Call Soroban contract to get escrow details
-    // Steps:
-    // 1. Invoke contract.get_escrow(payment_id)
-    // 2. Contract returns escrow details (without OTP hash)
-    // 3. Return status to user
-    
-    // Simulated response
-    res.json({
-      success: true,
-      payment_id: payment_id,
-      status: 'pending',
-      note: 'Escrow data is stored in the smart contract'
+    const contractId = validateContractId(process.env.CONTRACT_ID);
+    const contract = new Contract(contractId);
+
+    const tempKeypair = StellarSDK.Keypair.random();
+    const tempAccount = await server.loadAccount(tempKeypair.publicKey()).catch(() => {
+      return new StellarSDK.Account(tempKeypair.publicKey(), '0');
     });
+
+    const transaction = new StellarSDK.TransactionBuilder(tempAccount, {
+      fee: '100000',
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(
+        contract.call(
+          'get_escrow',
+          nativeToScVal(payment_id, { type: 'string' })
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const sorobanServer = new SorobanRpc.Server(process.env.SOROBAN_RPC_URL);
+    const simulateResponse = await sorobanServer.simulateTransaction(transaction);
+    
+    if (SorobanRpc.Api.isSimulationError(simulateResponse)) {
+      return res.status(404).json({ 
+        error: 'Payment not found', 
+        details: simulateResponse.error 
+      });
+    }
+
+    const result = simulateResponse.result?.retval;
+    if (result) {
+      const escrowData = scValToNative(result);
+      
+      res.json({
+        success: true,
+        payment_id: payment_id,
+        sender: escrowData[0],
+        receiver: escrowData[1],
+        amount: (escrowData[2] / 10000000).toString(),
+        is_active: escrowData[3],
+        timestamp: escrowData[4],
+        status: escrowData[3] ? 'pending' : 'completed',
+        note: 'Data retrieved from smart contract'
+      });
+    } else {
+      res.status(404).json({ error: 'Payment not found' });
+    }
 
   } catch (error) {
     console.error('Get payment status error:', error);
@@ -190,4 +413,4 @@ exports.getPaymentStatus = async (req, res) => {
       details: error.message 
     });
   }
-};
+}
