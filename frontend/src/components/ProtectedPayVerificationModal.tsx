@@ -94,65 +94,62 @@ export default function ProtectedPayVerificationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[70]" onClick={resetAndClose}>
-      <div className="w-full max-w-md">
-        <div
-          className="bg-white rounded-t-2xl w-full p-6"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xl font-bold">Protected Payment Received</h3>
-            <button onClick={resetAndClose}>
-              <IoClose size={24} />
-            </button>
-          </div>
-
-          <div className="bg-[#FFFBF0] border border-[#FFC940] rounded-lg p-4 mb-4">
-            <p className="text-sm text-gray-700">
-              Amount: <span className="font-semibold">{paymentData.amount} {paymentData.asset}</span>
-            </p>
-            <p className="text-xs text-gray-600 mt-1 break-all">
-              From: {paymentData.fromUserEmail || paymentData.sender}
-            </p>
-            <p className="text-xs text-gray-600 mt-1 font-mono">
-              Payment ID: {paymentData.payment_id}
-            </p>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <p className="text-xs text-blue-900">
-              💡 Enter the OTP shared by the sender to release funds. 
-              The amount will be auto-swapped to your preferred asset if needed.
-            </p>
-          </div>
-
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Enter OTP
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="6-digit OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-              className="w-full border rounded-lg p-3 text-gray-900 tracking-widest text-center text-xl font-bold"
-            />
-          </div>
-
-          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-
-          <button
-            onClick={handleVerify}
-            disabled={loading || otp.length !== 6}
-            className="w-full bg-black text-[#FFC940] py-3 rounded-lg font-semibold disabled:opacity-50"
-          >
-            {loading ? 'Verifying...' : 'Verify OTP & Claim Funds'}
+  <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-[95]" onClick={resetAndClose}>
+    <div className="w-full max-w-md sm:max-w-sm px-3 sm:px-0" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full p-5 shadow-2xl border border-gray-200">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-bold text-gray-900">Claim Protected Payment</h3>
+          <button onClick={resetAndClose} className="text-gray-600 hover:text-gray-900">
+            <IoClose size={22} />
           </button>
         </div>
-        <div className="h-[100px] bg-white w-full max-w-md"></div>
+
+        <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-4">
+          <p className="text-sm text-gray-800">
+            Amount: <span className="font-semibold">{paymentData.amount} {paymentData.asset}</span>
+          </p>
+          <p className="text-xs text-gray-600 mt-1 break-all">From: {paymentData.fromUserEmail || paymentData.sender}</p>
+          <p className="text-[11px] text-gray-500 mt-2 break-all font-mono">
+            Payment ID: {paymentData.payment_id}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 mb-4">
+          <p className="text-xs text-blue-900">
+            Enter the OTP shared by the sender to claim funds. You can do this anytime before expiry.
+          </p>
+        </div>
+
+        <label className="block text-sm font-semibold text-gray-800 mb-2">OTP</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="6-digit OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+          className="w-full border border-gray-300 rounded-xl p-3 text-gray-900 tracking-widest text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-black/20"
+        />
+
+        {error && <p className="text-red-600 text-sm mt-3">{error}</p>}
+
+        <button
+          onClick={handleVerify}
+          disabled={loading || otp.length !== 6}
+          className="w-full mt-4 bg-black text-[#FFC940] py-3 rounded-xl font-semibold disabled:opacity-50"
+        >
+          {loading ? 'Verifying...' : 'Verify OTP & Claim'}
+        </button>
+
+        <button
+          onClick={resetAndClose}
+          className="w-full mt-2 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Not now
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
+
 }
