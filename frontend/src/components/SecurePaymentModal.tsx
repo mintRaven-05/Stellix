@@ -21,7 +21,7 @@ function computeExpiryIso(hoursFromNow: number) {
 }
 
 export default function SecurePaymentModal({ isOpen, onClose, recipient, expiryHours = 48 }: Props) {
-  const { userData, verifyPin } = useAuth();
+  const { userData, verifyPin, getPrimarySecret } = useAuth();
   const [amount, setAmount] = useState('');
   const [otpShown, setOtpShown] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,13 +70,19 @@ export default function SecurePaymentModal({ isOpen, onClose, recipient, expiryH
     setError('');
 
     try {
+      // Decrypt the secret
+      const senderSecret = await getPrimarySecret();
+      if (!senderSecret) {
+        throw new Error('Failed to retrieve wallet secret');
+      }
+
       // 1) Buyer generates OTP locally
       const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
 
       // 2) Build + sign payment now (no user interaction needed)
       const signedXdr = await buildAndSignXlmPaymentWithSecretKey({
         fromPublicKey: userData.primaryWallet,
-        fromSecretKey: userData.primarySecret,
+        fromSecretKey: senderSecret,
         toPublicKey: recipient.primaryWallet,
         amount: amt,
         memo: `sUPI:${recipient.supid}`,
