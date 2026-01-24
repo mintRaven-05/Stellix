@@ -15,6 +15,8 @@ function getAsset(assetCode) {
   // Common testnet assets - update with actual issuers
   const assetIssuers = {
     'USDC': 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5', // Example issuer
+    'INRPC':'GAJ5ADKESGK3S5VRRUWCONMCRSAUIY4HN3DUVJAFBPA2S67B7DQRCJFV',
+    'INRC': 'GCI7I35SFSWG7U5RMUBZB5BTYSDIEDNAENEPA4CXNNTNXOHNFS4KS63L'
     // Add more assets as needed
   };
   
