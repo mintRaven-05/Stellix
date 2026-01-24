@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { account, databases, ID } from '@/lib/appwrite';
 import { generateSUPIId, UserData } from '@/lib/supi';
+import { encryptSecret, decryptSecret } from '@/lib/encryption';
 import { Models, Query, OAuthProvider } from 'appwrite';
 
 interface AuthContextType {
@@ -18,6 +19,8 @@ interface AuthContextType {
   setPrimaryWallet: (walletAddress: string) => Promise<void>;
   searchUsers: (query: string) => Promise<UserData[]>;
   verifyPin: (pin: string) => boolean;
+  getPrimarySecret: () => Promise<string | null>;
+  getWalletSecret: (walletAddress: string) => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,16 +156,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await response.json();
       const { publicKey, secretKey } = result.data;
 
+      // Encrypt the secret before storing
+      const encryptedSecret = await encryptSecret(secretKey);
+
       const supid = generateSUPIId(user.email);
       const newUserData: UserData = {
         supid,
         walletAddresses: [publicKey],
         primaryWallet: publicKey,
-        walletSecrets: [secretKey],
-        primarySecret: secretKey,
+        walletSecrets: [encryptedSecret],
+        primarySecret: encryptedSecret,
         supi_pin: pin,
         email: user.email,
         dateCreated: new Date().toISOString(),
+        pref: 'XLM',
         name: user.name || '',
       };
 
@@ -198,8 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Wallet already exists');
       }
 
+      // Encrypt the new wallet secret
+      const encryptedSecret = await encryptSecret(secretKey);
+
       const updatedWallets = [...userData.walletAddresses, publicKey];
-      const updatedSecrets = [...userData.walletSecrets, secretKey];
+      const updatedSecrets = [...userData.walletSecrets, encryptedSecret];
       const updatedUserData: UserData = {
         ...userData,
         walletAddresses: updatedWallets,
@@ -278,6 +288,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userData.supi_pin === pin;
   }
 
+  async function getPrimarySecret(): Promise<string | null> {
+    if (!userData?.primarySecret) {
+      console.error('No primarySecret found in userData');
+      return null;
+    }
+    try {
+      console.log('Attempting to decrypt primary secret...');
+      const decrypted = await decryptSecret(userData.primarySecret);
+      console.log('Successfully decrypted primary secret');
+      return decrypted;
+    } catch (error) {
+      console.error('Error decrypting primary secret:', error);
+      console.error('Encrypted value:', userData.primarySecret);
+      return null;
+    }
+  }
+
+  async function getWalletSecret(walletAddress: string): Promise<string | null> {
+    if (!userData) return null;
+    const walletIndex = userData.walletAddresses.indexOf(walletAddress);
+    if (walletIndex === -1) return null;
+    try {
+      return await decryptSecret(userData.walletSecrets[walletIndex]);
+    } catch (error) {
+      console.error('Error decrypting wallet secret:', error);
+      return null;
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -293,6 +332,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPrimaryWallet,
         searchUsers,
         verifyPin,
+        getPrimarySecret,
+        getWalletSecret,
       }}
     >
       {children}

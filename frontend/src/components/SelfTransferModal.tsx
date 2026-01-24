@@ -8,7 +8,7 @@ import PinVerificationModal from './PinVerificationModal';
 interface SelfTransferModalProps {
   isOpen: boolean;
   onClose: () => void;
-  wallets: Array<{ address: string; secret: string }>;
+  wallets: Array<{ address: string; getSecret: () => Promise<string | null> }>;
   availableAssets: Array<{ code: string; issuer: string | null; balance: string }>;
   onTransferSuccess: () => void;
 }
@@ -54,12 +54,6 @@ export default function SelfTransferModal({
       return;
     }
 
-    const sourceSecret = wallets.find(w => w.address === sourceWallet)?.secret;
-    if (!sourceSecret) {
-      setError('Source wallet secret not found');
-      return;
-    }
-
     setError('');
     setShowPinModal(true);
   };
@@ -77,9 +71,17 @@ export default function SelfTransferModal({
 
   const processTransfer = async () => {
     const amt = amount.trim();
-    const sourceSecret = wallets.find(w => w.address === sourceWallet)?.secret;
+    
+    // Find the source wallet and decrypt its secret
+    const sourceWalletData = wallets.find(w => w.address === sourceWallet);
+    if (!sourceWalletData) {
+      setError('Source wallet not found');
+      return;
+    }
+
+    const sourceSecret = await sourceWalletData.getSecret();
     if (!sourceSecret) {
-      setError('Source wallet secret not found');
+      setError('Failed to retrieve source wallet secret');
       return;
     }
 
@@ -93,10 +95,10 @@ export default function SelfTransferModal({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sender_secret: sourceSecret,
-          receiver_wallet: destinationWallet,
-          asset: asset,
-          amount: amt,
+          senderSecret: sourceSecret,
+          AssetCode: asset,
+          AssetAmount: amt,
+          recieverWallet: destinationWallet,
         }),
       });
 

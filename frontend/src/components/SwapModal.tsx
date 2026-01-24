@@ -14,12 +14,11 @@ interface SwapModalProps {
   isOpen: boolean;
   onClose: () => void;
   availableAssets: Array<{ code: string; issuer: string | null; balance: string }>;
-  secretKey: string;
   onSwapSuccess: () => void;
 }
 
-export default function SwapModal({ isOpen, onClose, availableAssets, secretKey, onSwapSuccess }: SwapModalProps) {
-  const { verifyPin } = useAuth();
+export default function SwapModal({ isOpen, onClose, availableAssets, onSwapSuccess }: SwapModalProps) {
+  const { verifyPin, getPrimarySecret } = useAuth();
   const [sourceAsset, setSourceAsset] = useState<Asset>({ code: 'XLM' });
   const [sourceAmount, setSourceAmount] = useState('');
   const [destinationAsset, setDestinationAsset] = useState<Asset>(() => {
@@ -76,6 +75,12 @@ export default function SwapModal({ isOpen, onClose, availableAssets, secretKey,
     setError('');
 
     try {
+      // Decrypt the secret
+      const secretKey = await getPrimarySecret();
+      if (!secretKey) {
+        throw new Error('Failed to retrieve wallet secret');
+      }
+
       const payload: any = {
         secretKey,
         sourceAsset: sourceAsset.issuer 
