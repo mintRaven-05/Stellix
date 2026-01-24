@@ -44,6 +44,19 @@ function hashOTP(otp) {
   // For now, simple hash (you can improve this)
   return 'HASH_' + otp;
 }
+function getTokenContractAddress(assetCode, assetIssuer) {
+  if (assetCode === 'XLM' || assetCode === 'native' || !assetIssuer) {
+    // For native XLM, return the native contract address
+    return 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+  }
+  
+  // For other assets, derive the contract address from asset code and issuer
+  // This uses Stellar's Asset Contract
+  const asset = new StellarSDK.Asset(assetCode, assetIssuer);
+  const contractAddress = StellarSDK.Address.fromAsset(asset).toString();
+  
+  return contractAddress;
+}
 
 module.exports = {
   server,
@@ -52,5 +65,6 @@ module.exports = {
   getAsset,
   generatePaymentId,
   generateOTP,
-  hashOTP
+  hashOTP,
+  getTokenContractAddress
 };
