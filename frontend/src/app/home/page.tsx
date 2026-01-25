@@ -10,6 +10,7 @@ import BackgroundPattern from '@/components/BackgroundPattern';
 import {
   IoShieldCheckmarkOutline,
   IoWalletOutline,
+  IoCopyOutline,
   IoChevronForwardOutline,
   IoCheckmarkCircle,
   IoWarningOutline,
@@ -39,6 +40,9 @@ export default function HomePage() {
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [pendingLoading, setPendingLoading] = useState(false);
   const [showQRDisplay, setShowQRDisplay] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const primary = userData?.supid;
 
   useEffect(() => {
     if (!user) router.push('/login');
@@ -86,6 +90,17 @@ export default function HomePage() {
   const wallets = userData.walletAddresses?.length || 0;
   const hasWallet = !!userData.primaryWallet;
 
+  const copyPrimary = async () => {
+    if (!primary) return;
+    try {
+      await navigator.clipboard.writeText(primary);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] relative">
       <ProtectedPayNotifications />
@@ -111,6 +126,13 @@ export default function HomePage() {
                   <span className="text-sm font-mono font-bold text-white break-all">
                     {userData.supid}
                   </span>
+                  <button
+                    onClick={copyPrimary}
+                    className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-transparent text-sm font-semibold text-gray-100"
+                  >
+                    {copied ? <IoCheckmarkCircle className="text-green-600" /> : <IoCopyOutline />}
+                    {/* {copied ? 'Copied' : 'Copy'} */}
+                  </button>
                 </div>
               </div>
 
@@ -124,13 +146,13 @@ export default function HomePage() {
             </div>
 
             {/* Status row */}
-            <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-white p-4 border border-gray-200 min-w-0 overflow-hidden">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs text-gray-500">Wallet</p>
                   <IoWalletOutline className="text-xl text-gray-700 shrink-0" />
                 </div>
-
+                
                 <div className="mt-2 flex items-center gap-2 min-w-0">
                   {hasWallet ? (
                     <IoCheckmarkCircle className="text-green-600 shrink-0" />
@@ -145,16 +167,6 @@ export default function HomePage() {
                 <p className="text-[11px] text-gray-500 mt-1 font-mono break-all leading-snug">
                   {hasWallet ? shortKey(userData.primaryWallet) : '—'}
                 </p>
-              </div>
-
-
-              <div className="rounded-2xl bg-white p-4 border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Wallets</p>
-                  <IoPulseOutline className="text-xl text-gray-700" />
-                </div>
-                <p className="mt-2 text-2xl font-extrabold text-gray-900">{wallets}</p>
-                <p className="text-[11px] text-gray-500 mt-1">Linked to sUPI</p>
               </div>
 
               <div className="rounded-2xl bg-white p-4 border border-gray-200">
@@ -180,7 +192,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Inbox / Pending */}
+        {/* Inbox / Pending
         <button
           onClick={() => router.push('/activity')}
           className="w-full text-left rounded-3xl bg-white border border-gray-200 shadow-md overflow-hidden active:scale-[0.995]"
@@ -209,7 +221,7 @@ export default function HomePage() {
               <IoChevronForwardOutline className="text-xl text-gray-700" />
             </div>
           </div>
-        </button>
+        </button> */}
 
         {/* Guidance (actually useful, not fluff) */}
         <div className="rounded-3xl bg-white border border-gray-200 shadow-md overflow-hidden">

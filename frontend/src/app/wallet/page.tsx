@@ -140,7 +140,7 @@ export default function WalletPage() {
   const formatBalance = (balance: string) => {
     const num = parseFloat(balance);
     if (!isFinite(num)) return balance;
-    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 7 });
+    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
   };
 
   return (
