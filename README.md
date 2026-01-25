@@ -20,12 +20,13 @@ Built on the Stellar Network, Stellix enables fast, low-cost peer-to-peer and cr
   <img width="1280" height="784" alt="image" src="https://github.com/user-attachments/assets/7c6ee34b-caed-4d37-97ca-3ac60e82f379" />
   
   <div>
-    <img width="480" height="1000" alt="image" src="https://github.com/user-attachments/assets/37028e12-d1ea-406b-90fe-9b7855ba6804" />
-    <img width="480" height="1000" alt="image" src="https://github.com/user-attachments/assets/7fecd557-fe3c-4111-a6a5-845349552739" />
+    <img width="240" height="500" alt="image" src="https://github.com/user-attachments/assets/37028e12-d1ea-406b-90fe-9b7855ba6804" />
+    <img width="240" height="500" alt="image" src="https://github.com/user-attachments/assets/7fecd557-fe3c-4111-a6a5-845349552739" />
 
   </div>
 
 </div>
+
 ---
 
 ## Problem Statement
