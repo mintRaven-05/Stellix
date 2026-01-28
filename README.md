@@ -2,7 +2,6 @@
 <h2 align=center>NullPointers<br>Stellar Build-A-Thon, Kolkata</h2>
 
 <br/>
-GDRIVE LINK (PPT and DEMO): https://drive.google.com/drive/folders/1YnKzSFQqTff23GQBHAI75z38xr1eyLqb?usp=sharing
 
 ## Contract Address and assets: 
 - Contract Address: CDFXJWPGADPOVK6MROIKOT3RRANCZ576AJSM5JG3WTZRTY6YEYHSMSCC
